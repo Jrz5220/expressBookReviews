@@ -21,7 +21,7 @@ public_users.get('/',function (req, res) {
 public_users.get('/isbn/:isbn',function (req, res) {
   // get book details based on ISBN
   let isbn = req.params.isbn;
-  let book = books.isbn;
+  let book = books[isbn];
   return res.status(200).json(book);
  });
   
