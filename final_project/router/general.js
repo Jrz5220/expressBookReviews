@@ -29,13 +29,13 @@ public_users.get('/isbn/:isbn',function (req, res) {
 public_users.get('/author/:author',function (req, res) {
   // get book details based on the author
   let author = req.params.author.toLowerCase().replace(/\s+/g, "");
-  let book = null;
+  let booksByAuthor = [];
   for(let key in books) {
     if(books[key].author.toLowerCase().replace(/\s+/g, "") === author) {
-        book = books[key];
+        booksByAuthor.push(books[key]);
     }
   }
-  return res.status(200).json(book);
+  return res.status(200).json({booksByAuthor: booksByAuthor});
 });
 
 // Get all books based on title
