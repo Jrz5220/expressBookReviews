@@ -5,18 +5,45 @@ const regd_users = express.Router();
 
 let users = [];
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+const isValid = (username) => {
+    // returns boolean
+    // write code to check is the username is valid
+    let usersWithSameName = users.filter((user) => {
+        return user.username === username;
+    });
+    if(usersWithSameName.length > 0) {
+        return false;
+    }
+    return true;
 }
 
-const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
+const authenticatedUser = (username, password) => {
+    //returns boolean
+    //write code to check if username and password match the one we have in records.
+    let isAuthenticatedUser = false;
+    for(let i = 0; i < users.length; i++) {
+        if(users[i].username === username && users[i].password === password) {
+            isAuthenticatedUser = true;
+            break;
+        }
+    }
+    return isAuthenticatedUser;
 }
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    // save the user's credentials for the session as a JWT
+    let username = req.body.username;
+    let password = req.body.password;
+    if(authenticatedUser(username, password)) {
+        let accessToken = jwt.sign({
+            data: password
+        }, "access", { expiresIn: 60 * 60 });
+        req.session.authorization = { accessToken, username };
+        return res.status(200).json({message: "User successfully logged in."});
+    } else {
+        return res.status(400).json({message: "Invalid login. Check username and password."});
+    }
 });
 
 // Add a book review
