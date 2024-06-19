@@ -48,8 +48,26 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  // review is given as a request query and must get posted with the username posted (stored in the session).
+  // if the same user posts a different review on the same ISBN, it should modify the existing review.
+  // if another logged in user posts a review on the same ISBN, it will get added as a different review.
+  let isbn = req.params.isbn;
+  let review = req.body.review;
+  let username = req.body.username;
+  if(req.session.authorization) {
+    token = req.session.authorization["accessToken"];
+    jwt.verify(token, "access", (err, user) => {
+        if(err) {
+            return res.status(403).json({message: "User not authenticated", user: username});
+        }
+        // store the review with the user
+        user.reviews[isbn] = review;
+        books[isbn].reviews[username] = review;
+        return res.status(200).json({message: "Successfully added review.", user: username});
+    });
+  } else {
+    return res.status(403).json({message: "User not logged in.", user: username});
+  }
 });
 
 module.exports.authenticated = regd_users;
