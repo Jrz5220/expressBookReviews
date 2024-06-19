@@ -55,13 +55,13 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   let review = req.body.review;
   let username = req.body.username;
   if(req.session.authorization) {
-    token = req.session.authorization["accessToken"];
+    let token = req.session.authorization["accessToken"];
     jwt.verify(token, "access", (err, user) => {
         if(err) {
             return res.status(403).json({message: "User not authenticated", user: username});
         }
         // store the review with the user
-        user.reviews[isbn] = review;
+        user.reviews[isbn] = review;    // TypeError: Cannot set properties of undefined
         books[isbn].reviews[username] = review;
         return res.status(200).json({message: "Successfully added review.", user: username});
     });
