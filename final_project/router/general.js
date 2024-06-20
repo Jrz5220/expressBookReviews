@@ -32,17 +32,28 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-  // get list of books available in the shop
-  // use JSON.stringify to display the output neatly
-  return res.status(200).json(books);
+  let getBooks = new Promise((resolve, reject) => {
+    resolve(books);
+  });
+  getBooks.then((books) => {
+    return res.status(200).json(books);
+  }).catch(err => {
+    return res.status(500).json({message: "An error occured on the server", error: err.name});
+  })
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  // get book details based on ISBN
-  let isbn = req.params.isbn;
-  let book = books[isbn];
-  return res.status(200).json(book);
+    let getBookDetails = new Promise((resolve, reject) => {
+        let isbn = req.params.isbn;
+        let book = books[isbn];
+        resolve(book);
+    });
+    getBookDetails.then((book) => {
+        return res.status(200).json(book);
+    }).catch((err) => {
+        return res.status(500).json({message: "An error occured on the server", error: err.name});
+    });
  });
   
 // Get book details based on author
@@ -60,15 +71,20 @@ public_users.get('/author/:author',function (req, res) {
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-  // get book details based on the title
-  let title = req.params.title.toLowerCase().replace(/\s+/g, "");
-  let booksWithTitle = [];
-  for(let key in books) {
-    if(books[key].title.toLowerCase().replace(/\s+/g, "") === title) {
-        booksWithTitle.push(books[key]);
-    }
-  }
-  return res.status(200).json({booksWithTitle: booksWithTitle});
+    let getBookBasedOnTitle = new Promise((resolve, reject) => {
+        let title = req.params.title.toLowerCase().replace(/\s+/g, "");
+        let booksWithTitle = [];
+        for(let key in books) {
+            if(books[key].title.toLowerCase().replace(/\s+/g, "") === title) {
+                booksWithTitle.push(books[key]);
+            }
+        }
+    });
+    getBookBasedOnTitle.then((books) => {
+        return res.status(200).json({booksWithTitle: books});
+    }).catch((err) => {
+        return res.status(500).json({message: "An error occured on the server", error: err.name});
+    });
 });
 
 //  Get book review
