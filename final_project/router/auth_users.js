@@ -57,11 +57,11 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     let token = req.session.authorization["accessToken"];
     jwt.verify(token, "access", (err, user) => {
         if(err) {
-            return res.status(403).json({message: "User not authenticated", user: username});
+            return res.status(403).json({message: "User not authenticated"});
         }
         // store review with the user
         let verifiedUser = users.filter((u) => {
-            return u.password === user.data;
+            return u.password === user.data;  // the password of the authenticated user
         });
         // verifiedUser.length should never be 0
         if(verifiedUser.length > 0) {
@@ -97,6 +97,31 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   } else {
     return res.status(403).json({message: "User not logged in"});
   }
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    // delete reviews based on the session username
+    let isbn = req.params.isbn;
+    if(req.session.authorization) {
+        let token = req.session.authorization["accessToken"];
+        jwt.verify(token, "access", (err, user) => {
+            if(err) {
+                res.status(403).json({message: "User not authenticated"});
+            }
+            let verifiedUser = users.filter((u) => {
+                return u.password === user.data;
+            });
+            try {
+                delete verifiedUser[0].reviews[isbn]; // verifiedUser should never be empty
+                delete books[isbn].reviews[verifiedUser[0].username];
+                res.status(200).json({message: "Successfully deleted review", user: verifiedUser[0], book: books[isbn]});
+            } catch(e) {
+                return res.status(500).json({message: "A server error prevented the user from being authenticated", error: e.name});
+            }
+        });
+    } else {
+        res.status(403).json({message: "User not logged in"});
+    }
 });
 
 // for testing
