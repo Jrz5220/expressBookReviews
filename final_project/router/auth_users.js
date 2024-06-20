@@ -53,27 +53,22 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   // if another logged in user posts a review on the same ISBN, it will get added as a different review.
   let isbn = req.params.isbn;
   let review = req.body.review;
-  let username = req.body.username;
   if(req.session.authorization) {
     let token = req.session.authorization["accessToken"];
     jwt.verify(token, "access", (err, user) => {
         if(err) {
             return res.status(403).json({message: "User not authenticated", user: username});
         }
-        console.log("user returned by JWT: " + JSON.stringify(user));
-        console.log("all authorized users: " + JSON.stringify(users));
         // store review with the user
         let verifiedUser = users.filter((u) => {
             return u.password === user.data;
         });
+        // verifiedUser.length should never be 0
         if(verifiedUser.length > 0) {
-            console.log("verified user: " + JSON.stringify(verifiedUser[0]));
             if(verifiedUser[0].reviews[isbn]) {
-                console.log("replace old review: " + verifiedUser[0].reviews[isbn]);
                 // replace old book review
                 verifiedUser[0].reviews[isbn] = review;
             } else {
-                console.log("add new review");
                 // store new book review
                 let storeNewUserReview = {
                     ...verifiedUser[0].reviews,
@@ -81,18 +76,14 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
                 }
                 verifiedUser[0].reviews = storeNewUserReview;
             }
-            console.log("updated user: " + JSON.stringify(verifiedUser[0]));
         } else {
-            console.log("verifiedUser: " + typeof verifiedUser);
-            return res.status(500).json({message: "Unable to verify user", user: verifiedUser[0], users: users});
+            return res.status(500).json({message: "The server was unable to verify the user"});
         }
-        console.log("---------- updating book object ----------");
         // store review with the book
-        let duplicateUserReview = books[isbn].reviews[username];
+        let duplicateUserReview = books[isbn].reviews[verifiedUser[0].username];
         if(duplicateUserReview) {
-            console.log("old review: " + books[isbn].reviews[username]);
             // replace old user book review
-            books[isbn].reviews[username] = review;
+            books[isbn].reviews[verifiedUser[0].username] = review;
         } else {
             // add new user review
             let storeNewBookReview = {
@@ -101,12 +92,10 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
             }
             books[isbn].reviews = storeNewBookReview;
         }
-        console.log("updated book reviews: " + JSON.stringify(books[isbn].reviews));
-        // user.reviews[isbn] = review;    // TypeError: Cannot set properties of undefined
-        return res.status(200).json({message: "Successfully added review.", book: books[isbn].reviews, user: verifiedUser[0]});
+        return res.status(200).json({message: "Successfully added review.", bookTitle: books[isbn].title, bookReview: books[isbn].reviews});
     });
   } else {
-    return res.status(403).json({message: "User not logged in.", user: username});
+    return res.status(403).json({message: "User not logged in"});
   }
 });
 
