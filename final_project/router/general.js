@@ -37,7 +37,7 @@ public_users.get('/',function (req, res) {
   });
   getBooks.then((books) => {
     return res.status(200).json(books);
-  }).catch(err => {
+  }).catch((err) => {
     return res.status(500).json({message: "An error occured on the server", error: err.name});
   })
 });
@@ -58,15 +58,21 @@ public_users.get('/isbn/:isbn',function (req, res) {
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
-  // get book details based on the author
-  let author = req.params.author.toLowerCase().replace(/\s+/g, "");
-  let booksByAuthor = [];
-  for(let key in books) {
-    if(books[key].author.toLowerCase().replace(/\s+/g, "") === author) {
-        booksByAuthor.push(books[key]);
-    }
-  }
-  return res.status(200).json({booksByAuthor: booksByAuthor});
+    let getBooksBasedOnAuthor = new Promise((resolve, reject) => {
+        let author = req.params.author.toLowerCase().replace(/\s+/g, "");
+        let booksByAuthor = [];
+        for(let key in books) {
+            if(books[key].author.toLowerCase().replace(/\s+/g, "") === author) {
+                booksByAuthor.push(books[key]);
+            }
+        }
+        resolve(booksByAuthor);
+    });
+    getBooksBasedOnAuthor.then((books) => {
+        return res.status(200).json(books);
+    }).catch((err) => {
+        return res.status(500).json({message: "An error occurred on the server", error: err.name});
+    });
 });
 
 // Get all books based on title
@@ -79,6 +85,7 @@ public_users.get('/title/:title',function (req, res) {
                 booksWithTitle.push(books[key]);
             }
         }
+        resolve(booksByAuthor);
     });
     getBookBasedOnTitle.then((books) => {
         return res.status(200).json({booksWithTitle: books});
