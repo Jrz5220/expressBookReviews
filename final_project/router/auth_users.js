@@ -60,14 +60,47 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         if(err) {
             return res.status(403).json({message: "User not authenticated", user: username});
         }
-        // store the review with the user
-        user.reviews[isbn] = review;    // TypeError: Cannot set properties of undefined
-        books[isbn].reviews[username] = review;
-        return res.status(200).json({message: "Successfully added review.", user: username});
+        // store review with the user
+        let verifiedUser = users.filter((u) => {
+            return u.password === user.data.password;
+        });
+        if(verifiedUser[0].length > 0) {
+            if(verifiedUser[0].reviews[isbn]) {
+                // replace old book review
+                verifiedUser[0].reviews[isbn] = review;
+            } else {
+                // store new book review
+                let storeNewUserReview = {
+                    ...verifiedUser[0].reviews,
+                    [isbn]: review
+                }
+                verifiedUser[0].reviews = storeNewUserReview;
+            }
+        }
+        // store review with the book
+        let duplicateUserReview = books[isbn].reviews[username];
+        if(duplicateUserReview) {
+            // replace old user book review
+            books[isbn].reviews[username] = review;
+        } else {
+            // add new user review
+            let storeNewBookReview = {
+                ...books[isbn].reviews,
+                [verifiedUser[0].username]: review
+            }
+            books[isbn].reviews = storeNewBookReview;
+        }
+        // user.reviews[isbn] = review;    // TypeError: Cannot set properties of undefined
+        return res.status(200).json({message: "Successfully added review.", book: books[isbn].reviews, user: verifiedUser[0]});
     });
   } else {
     return res.status(403).json({message: "User not logged in.", user: username});
   }
+});
+
+// for testing
+regd_users.get("/users", (req, res) => {
+    return res.status(200).json({users: users});
 });
 
 module.exports.authenticated = regd_users;
